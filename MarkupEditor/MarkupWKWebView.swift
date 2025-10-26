@@ -1380,6 +1380,24 @@ public class MarkupWKWebView: WKWebView, ObservableObject {
         try await evaluateJavaScript("MU.toggleSuperscript()")
     }
     
+    // Required for menu support
+    @objc public func setTextColor(_ color: String, handler: (()->Void)? = nil) {
+        // Ensure color is in hex format (with #)
+        let hexColor = color.hasPrefix("#") ? color : "#\(color)"
+        evaluateJavaScript("MU.setTextColor('\(hexColor)')") { result, error in
+            if let error {
+                print("ERROR: \(error.localizedDescription)")
+            }
+            handler?()
+        }
+    }
+    
+    public func setTextColor(_ color: String) async throws {
+        // Ensure color is in hex format (with #)
+        let hexColor = color.hasPrefix("#") ? color : "#\(color)"
+        try await evaluateJavaScript("MU.setTextColor('\(hexColor)')")
+    }
+    
     //MARK: Selection state
     
     /// Get the selectionState async and execute a handler with it.

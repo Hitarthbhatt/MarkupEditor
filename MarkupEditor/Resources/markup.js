@@ -18354,6 +18354,40 @@
       _toggleFormat('SUP');
   }
   /**
+   * Set the text color for the selection
+   * @param {String}  color    The color value in hex format (with or without #)
+   */
+  function setTextColor(color) {
+      if (!view || !color) return;
+      
+      const { state } = view;
+      const { from, to } = state.selection;
+      if (from === to) return;
+      
+      // Ensure color is in hex format with #
+      const hexColor = color.startsWith('#') ? color : `#${color}`;
+      
+      // Use the DOM approach to wrap selection with colored span
+      const domSelection = window.getSelection();
+      if (domSelection && domSelection.rangeCount > 0) {
+          const range = domSelection.getRangeAt(0);
+          const span = document.createElement('span');
+          span.style.color = hexColor;
+          
+          try {
+              range.surroundContents(span);
+          } catch (e) {
+              // Selection crosses element boundaries - wrap contents
+              const contents = range.extractContents();
+              span.appendChild(contents);
+              range.insertNode(span);
+          }
+          
+          // Trigger state change notification
+          stateChanged();
+      }
+  }
+  /**
    * Turn the format tag off and on for selection.
    * 
    * Although the HTML will contain <STRONG>, <EM>, and <S>, the types
@@ -23673,6 +23707,7 @@
   exports.setMessageHandler = setMessageHandler;
   exports.setPlaceholder = setPlaceholder;
   exports.setStyle = setStyle;
+  exports.setTextColor = setTextColor;
   exports.setTestHTML = setTestHTML;
   exports.setTopLevelAttributes = setTopLevelAttributes;
   exports.startModalInput = startModalInput;
