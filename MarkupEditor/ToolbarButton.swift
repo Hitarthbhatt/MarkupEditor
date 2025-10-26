@@ -104,6 +104,56 @@ public struct ToolbarTextButton: View {
     
 }
 
+public struct ToolbarColorButton: View {
+    private let systemName: String?
+    private let action: (String)->Void
+    private let activeColor: Color
+    private let onHover: ((Bool)->Void)?
+    @State private var showingColorPicker = false
+    @State private var selectedColor = "#000000"
+    
+    private let colorOptions = [
+        ("#000000", "Black"),
+        ("#FF0000", "Red"),
+        ("#00FF00", "Green"),
+        ("#0000FF", "Blue"),
+        ("#FFFF00", "Yellow"),
+        ("#FF00FF", "Magenta"),
+        ("#00FFFF", "Cyan"),
+        ("#FFA500", "Orange"),
+    ]
+    
+    public var body: some View {
+        Menu {
+            ForEach(colorOptions, id: \.0) { color, name in
+                Button(action: {
+                    selectedColor = color
+                    action(color)
+                }) {
+                    HStack {
+                        Circle()
+                            .fill(Color(hex: color))
+                            .frame(width: 16, height: 16)
+                        Text(name)
+                    }
+                }
+            }
+        } label: {
+            Image(systemName: systemName ?? "textformat")
+                .frame(width: MarkupEditor.toolbarStyle.buttonHeight(), height: MarkupEditor.toolbarStyle.buttonHeight())
+        }
+        .onHover { over in onHover?(over) }
+        .contentShape(RoundedRectangle(cornerRadius: 3))
+    }
+    
+    public init(systemName: String? = nil, action: @escaping (String)->Void, activeColor: Color = .accentColor, onHover: ((Bool)->Void)? = nil) {
+        self.systemName = systemName
+        self.action = action
+        self.activeColor = activeColor
+        self.onHover = onHover
+    }
+}
+
 public struct ToolbarButtonStyle: ButtonStyle {
     @Binding var active: Bool
     let activeColor: Color
@@ -131,5 +181,16 @@ public struct ToolbarButtonStyle: ButtonStyle {
                 )
                 .fill(active ? activeColor: Color.clear)
             )
+    }
+}
+
+extension Color {
+    init(hex: String) {
+        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&int)
+        let r, g, b: UInt64
+        (r, g, b) = (int >> 16, (int >> 8) & 0xFF, int & 0xFF)
+        self.init(.sRGB, red: Double(r) / 255, green: Double(g) / 255, blue: Double(b) / 255, opacity: 1)
     }
 }

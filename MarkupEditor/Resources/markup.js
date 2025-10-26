@@ -14577,6 +14577,22 @@
     code: {
       parseDOM: [{tag: "code"}],
       toDOM() { return codeDOM }
+    },
+
+    // :: MarkSpec A text color mark. Has `color` attribute.
+    textColor: {
+      attrs: {
+        color: {},
+      },
+      inclusive: true,
+      parseDOM: [{tag: "span", getAttrs(dom) {
+        const color = dom.style.color;
+        return color ? {color} : null;
+      }}, {style: "color", getAttrs: (value) => value ? {color: value} : null}],
+      toDOM(node) { 
+        let {color} = node.attrs;
+        return ["span", {style: `color: ${color};`}, 0];
+      }
     }
   };
 
@@ -18360,32 +18376,30 @@
   function setTextColor(color) {
       if (!view || !color) return;
       
-      const { state } = view;
+      const { state, dispatch } = view;
       const { from, to } = state.selection;
       if (from === to) return;
       
       // Ensure color is in hex format with #
       const hexColor = color.startsWith('#') ? color : `#${color}`;
       
-      // Use the DOM approach to wrap selection with colored span
-      const domSelection = window.getSelection();
-      if (domSelection && domSelection.rangeCount > 0) {
-          const range = domSelection.getRangeAt(0);
-          const span = document.createElement('span');
-          span.style.color = hexColor;
-          
-          try {
-              range.surroundContents(span);
-          } catch (e) {
-              // Selection crosses element boundaries - wrap contents
-              const contents = range.extractContents();
-              span.appendChild(contents);
-              range.insertNode(span);
-          }
-          
-          // Trigger state change notification
-          stateChanged();
+      // Get the textColor mark type from the schema
+      const textColorMark = state.schema.marks.textColor;
+      if (!textColorMark) {
+          console.error("textColor mark not found in schema");
+          return;
       }
+      
+      // Create a transaction to apply the color mark
+      const tr = state.tr;
+      // Remove existing text color marks in the selection
+      tr.removeMark(from, to, textColorMark);
+      // Add the new text color mark
+      tr.addMark(from, to, textColorMark.create({ color: hexColor }));
+      
+      // Apply the transaction
+      view.dispatch(tr);
+      stateChanged();
   }
   /**
    * Turn the format tag off and on for selection.

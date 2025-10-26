@@ -36,6 +36,14 @@ public struct FormatToolbar: View {
                 active: $selectionState.underline,
                 onHover: { over in hoverLabel = Text(over ? "Underline" : "Text Format") }
             )
+            // Text Color Button
+            ToolbarColorButton(
+                systemName: "textformat",
+                action: { color in
+                    observedWebView.selectedWebView?.setTextColor(color)
+                },
+                onHover: { over in hoverLabel = Text(over ? "Text Color" : "Text Format") }
+            )
             if contents.code {
                 ToolbarImageButton(
                     systemName: "curlybraces",
